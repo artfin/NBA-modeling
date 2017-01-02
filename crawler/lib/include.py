@@ -1,0 +1,35 @@
+class Include(object):
+	def __init__(self):
+
+		self.shortcuts = {
+			 	 	         "Golden State Warriors"  : "GSW",
+              	 	 "Cleveland Cavaliers"    : "CLE",
+              	   "Oklahoma City Thunder"  : "OKC",
+              	 	 "Brooklyn Nets"          : "BRK",
+              	 	 "Los Angeles Clippers"   : "LAC",
+                 	 "Toronto Raptors"        : "TOR",
+                 	 "Miami Heat"             : "MIA",   
+                 	 "Boston Celtics"         : "BOS",
+              	 	 "Orlando Magic"          : "ORL",
+              	 	 "Philadelphia 76ers"     : "PHI", 
+              	 	 "Washington Wizards"     : "WAS",
+              	 	 "Chicago Bulls"          : "CHI",
+              	 	 "Charlotte Hornets"      : "CHO",
+              	 	 "Milwaukee Bucks"        : "MIL",
+              	 	 "Dallas Mavericks"       : "DAL",
+              	 	 "Sacramento Kings"       : "SAC",
+              	 	 "Indiana Pacers"         : "IND",
+              	 	 "Los Angeles Lakers"     : "LAL", 
+              	 	 "Denver Nuggets"         : "DEN",
+              	 	 "Phoenix Suns"           : "PHO", 
+              	 	 "Utah Jazz"              : "UTA",
+              	 	 "New Orleans Pelicans"   : "NOP",
+              	 	 "New York Knicks"        : "NYK",
+              	 	 "Atlanta Hawks"          : "ATL",
+              	 	 "Detroit Pistons"        : "DET", 
+              	 	 "Houston Rockets"        : "HOU", 
+              	 	 "Memphis Grizzlies"      : "MEM",
+              	 	 "Minnesota Timberwolves" : "MIN",
+              	 	 "Portland Trail Blazers" : "POR",
+              	 	 "San Antonio Spurs"      : "SAS" 
+					 }
