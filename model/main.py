@@ -23,87 +23,109 @@ def matrix_factorization(R, K = 1, steps = 5000, alpha = 0.0002, beta = 0.02):
 	
 	return P, Q
 
-def parse_date(date):
-	date = parse('2016 ' + date)
-	return date.date()
+class Team(object):
+	def __init__(self, name):
+		self.name = name
 
-def show_game(game):
-	print('{0} | {1} ({2}) -- {3} ({4}): {5} : {6}'.format(parse_date(game["date"]), game["team1"].upper(), game["stats1"]["location"], 
-		game["team2"].upper(), game["stats2"]["location"], game["stats1"]["pts"], game["stats2"]["pts"]))
+		data = self.load_team_data()
+		self.home_games, self.road_games = self.filter_games(data)
+		pprint(home_games)
 
-def load_team_data(team):
-	path = '../crawler/data/' + team + '.json'
-	with open(path, mode = 'r') as inputfile:
-		return json.load(inputfile)
 
-def get_team_statistics(game, team):
-	key = None
-	if team.lower() == game['team1']: key = 'stats1'
-	if team.lower() == game['team2']: key = 'stats2'
-	
-	if key == None:
-		print("Given team hasn't played in game.")
-		return None
-	return game.get(key)
+	def load_team_data(self):
+		"""
+		Loads team data from json file.
+		"""
+		path = '../crawler/data/' + self.name + '.json'
+		with open(path, mode = 'r') as inputfile:
+			return json.load(inputfile)
 
-def get_team_offensive_stats(game, team):
-	team_statistics = get_team_statistics(game, team)
+	@staticmethod
+	def parse_date(date):
+		"""
+		Parse the date string of the type "26 December"
+		"""
+		date = parse('2016 ' + date)
+		return date.date()
 
-	offensive_stats = []
-	for element in OFFENSIVE_TABLE:
-		offensive_stats.append(team_statistics.get(element))
-	return offensive_stats
+	def show_game(self, game):
+		"""
+		Presents main game features in readable format.
+		"""
+		print('{0} | {1} ({2}) -- {3} ({4}): {5} : {6}'.format(self.parse_date(game["date"]), game["team1"].upper(), game["stats1"]["location"], 
+			game["team2"].upper(), game["stats2"]["location"], game["stats1"]["pts"], game["stats2"]["pts"]))
 
-def get_team_defensive_stats(game, team):
-	teams = [game['team1'], game['team2']]
-	rival_team = teams[1] if team.lower() == teams[0] else teams[0]
+	def get_team_statistics(game, team):
+		key = None
+		if team.lower() == game['team1']: key = 'stats1'
+		if team.lower() == game['team2']: key = 'stats2'
+		
+		if key == None:
+			print("Given team hasn't played in game.")
+			return None
+		return game.get(key)
 
-	team_statistics = get_team_statistics(game, team)
-	rival_statistics = get_team_statistics(game, rival_team)
+	def get_game_location(self, game, team):
+		"""
+		Given the game and current team, returns location relative to the current team. 
+		"""
+		team_statistics = self.get_team_statistics(game, team)
+		return team_statistics["location"]
 
-	defensive_stats = []
-	for element in DEFENSIVE_TABLE_RIVAL_TEAM:
-		defensive_stats.append(rival_statistics.get(element))
-	for element in DEFENSIVE_TABLE_CURRENT_TEAM:
-		defensive_stats.append(team_statistics.get(element))
-	return defensive_stats
+	def filter_games(self, games):
+		home_games = []
+		road_games = []
+		for game in games:
+			location = self.get_game_location(game, self.name)
+			if location == 'home': home_games.append(game)
+			if location == 'road': road_games.append(game)
+		return home_games, road_games
 
-def create_offensive_stats_table(games, team):
-	offensive_stats = []
-	for game in games:
-		offensive_stats.append(get_team_offensive_stats(game, team))
-	return np.array(offensive_stats)
+	def get_team_offensive_stats(self, game, team):
+		team_statistics = self.get_team_statistics(game, team)
 
-def get_game_location(game, team):
-	team_statistics = get_team_statistics(game, team)
-	return team_statistics["location"]
+		offensive_stats = []
+		for element in OFFENSIVE_TABLE:
+			offensive_stats.append(team_statistics.get(element))
+		return offensive_stats
 
-def filter_games(games, team):
-	home_games = []
-	road_games = []
-	for game in games:
-		location = get_game_location(game, team)
-		if location == 'home':
-			home_games.append(game)
-		if location == 'road':
-			road_games.append(game)
-	return {'home_games' : home_games, 'road_games' : road_games}
+	def get_team_defensive_stats(game, team):
+		teams = [game['team1'], game['team2']]
+		rival_team = teams[1] if team.lower() == teams[0] else teams[0]
 
-def calculate_offensive_vector(games, team):
-	offensive_stats = create_offensive_stats_table(last_games, 'ATL')
-	print(offensive_stats)
-	nP, nQ = matrix_factorization(offensive_stats)
-	return nP
+		team_statistics = get_team_statistics(game, team)
+		rival_statistics = get_team_statistics(game, rival_team)
 
-data = load_team_data('ATL')
+		defensive_stats = []
+		for element in DEFENSIVE_TABLE_RIVAL_TEAM:
+			defensive_stats.append(rival_statistics.get(element))
+		for element in DEFENSIVE_TABLE_CURRENT_TEAM:
+			defensive_stats.append(team_statistics.get(element))
+		return defensive_stats
 
-res = filter_games(data, team = 'ATL')
-home_games, road_games = res["home_games"], res["road_games"]
+	def create_offensive_stats_table(games, team):
+		offensive_stats = []
+		for game in games:
+			offensive_stats.append(get_team_offensive_stats(game, team))
+		return np.array(offensive_stats)
 
-last_games = home_games[-5:]
-for game in last_games:
-	show_game(game)
+	def calculate_offensive_vector(games, team):
+		offensive_stats = create_offensive_stats_table(last_games, 'ATL')
+		print(offensive_stats)
+		nP, nQ = matrix_factorization(offensive_stats)
+		return nP
 
-offensive_vector = calculate_offensive_vector(last_games, 'ATL')
-print(offensive_vector)
+# data = load_team_data('ATL')
+
+# res = filter_games(data, team = 'ATL')
+# home_games, road_games = res["home_games"], res["road_games"]
+
+# last_games = home_games[-5:]
+# for game in last_games:
+# 	show_game(game)
+
+# offensive_vector = calculate_offensive_vector(last_games, 'ATL')
+# print(offensive_vector)
+
+team = Team('ATL')
 
