@@ -63,10 +63,10 @@ class VectorCalculator(object):
 	def __init__(self, games, team, depth = 3):
 		self.team = team
 
-		if len(games) > depth:
+		if len(games) >= depth:
 			self.games = games[-depth:]
 		else:
-			print('Not enough games.')
+			print('Not enough games. There are only {0} games'.format(len(games)))
 			return None
 
 		# for game in self.games:
@@ -80,11 +80,17 @@ class VectorCalculator(object):
 
 	@staticmethod
 	def get_team_statistics(game, team):
+		"""
+		Returns team stats from file given the game.
+		"""
 		if team.lower() == game.team1.lower(): attr = 'stats1'
 		if team.lower() == game.team2.lower(): attr = 'stats2'
 		return getattr(game, attr)
 
 	def get_offensive_stats(self, game):
+		"""
+		Returns offensive stats in the format presented in OFFENSIVE TABLE
+		"""
 		team_stat = self.get_team_statistics(game, self.team)
 
 		offensive_stats = []
@@ -93,6 +99,9 @@ class VectorCalculator(object):
 		return offensive_stats
 
 	def get_team_defensive_stats(self, game):
+		"""
+		Returns defensive stats in the format presented DEFENSIVE TABLE
+		"""
 		teams = [getattr(game, 'team1'), getattr(game, 'team2')]
 		rival_team = teams[1] if self.team.lower() == teams[0] else teams[0]
 
@@ -107,29 +116,45 @@ class VectorCalculator(object):
 		return defensive_stats
 
 	def create_offensive_stats_table(self):
+		"""
+		For a given set of games assembles all offensive stats in a numpy-array.
+		"""
 		offensive_stats = []
 		for game in self.games:
 			offensive_stats.append(self.get_offensive_stats(game))
 		return np.array(offensive_stats)
 
 	def create_defensive_stats_table(self):
+		"""
+		For a given set of games assebles all defensive stats in a numpy-array.
+		"""
 		defensive_stats = []
 		for game in self.games:
 			defensive_stats.append(self.get_team_defensive_stats(game))
 		return np.array(defensive_stats)
 
-	def calculate_offensive_vector(self, offensive_stats):
+	@staticmethod
+	def calculate_offensive_vector(offensive_stats):
 		nP, nQ = matrix_factorization(offensive_stats)
 		return nP
 
-	def calculate_defensive_vector(self, defensive_stats):
+	@staticmethod
+	def calculate_defensive_vector(defensive_stats):
 		nP, nQ = matrix_factorization(defensive_stats)
 		return nQ
 
 class Loader(object):
-
 	def __init__(self, date):
 		self.date = date
+
+	def has_game(self, team):
+		blocks = self.data.get(team)
+
+		for block in blocks:
+			if block["date"] == self.date:
+				return True
+		else:
+			return False
 
 	def prepare_games(self, team):
 		blocks = self.data.get(team)
@@ -196,19 +221,32 @@ class Loader(object):
 Loader.set_teams(TEAMS)
 
 start_date = date(year = 2016, month = 10, day = 1)
-end_date = date(year = 2016, month = 10, day = 30)
+end_date = date(year = 2016, month = 11, day = 30)
 delta = end_date - start_date
 
 for day in range(delta.days + 1):
-	print(start_date + td(days = day))
+	current_date = start_date + td(days = day)
+	print('Current date: {0}'.format(current_date))
 
-loader = Loader.parse_date(date = '2016-12-10')
+	loader = Loader(date = current_date)
+	
+	if loader.has_game('ATL'):
+		print('Loader has game: {0}'.format(loader.has_game('ATL')))
+
+		home_games, road_games = loader.prepare_games('ATL')
+
+		vectorCalculator = VectorCalculator(games = home_games, team = 'ATL', depth = 3)
+	
+		if hasattr(vectorCalculator, 'offensive_vector'):
+			pprint('Offensive vector: {0}'.format(vectorCalculator.offensive_vector))
+	 		pprint('Defensive vecotr: {0}'.format(vectorCalculator.defensive_vector))
+
+print(res)
+
+loader = Loader.parse_date('2016-12-1')
 home_games, road_games = loader.prepare_games('ATL')
-
-vectorCalculator = VectorCalculator(games = home_games, team = 'ATL', depth = 3)
-pprint(vectorCalculator.offensive_vector)
-pprint(vectorCalculator.defensive_vector)
-
+for game in home_games + road_games:
+	game.show()
 
 
 
